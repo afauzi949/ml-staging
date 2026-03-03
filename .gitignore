@@ -1,0 +1,6 @@
+# gitignore file for ML staging project
+.env
+.env.example
+.venv/
+__pycache__/
+*.pyc
