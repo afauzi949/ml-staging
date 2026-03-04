@@ -99,7 +99,7 @@ nano .env
 ```env
 CONFLUENCE_URL=https://confluence.staytech.xyz  # Ganti ke https jika mendapat 308 redirect
 CONFLUENCE_USERNAME=admin
-CONFLUENCE_CREDENTIAL=muntilan  # Password atau Personal Access Token
+CONFLUENCE_CREDENTIAL=****  # Password atau Personal Access Token
 CONFLUENCE_SPACE_KEY=MKB
 ```
 
@@ -111,7 +111,7 @@ OPENAI_API_KEY=sk-your-actual-api-key-here
 #### **Qdrant Configuration**
 ```env
 QDRANT_URL=http://qdrant.staytech.xyz
-QDRANT_API_KEY=testajainimah
+QDRANT_API_KEY=****
 QDRANT_COLLECTION_NAME=knowledge_base_ml
 ```
 
@@ -413,7 +413,7 @@ kubectl port-forward -n qdrant svc/qdrant 6333:6333  # Port forward
 # Test manual connection dengan atlassian-python-api
 python3 -c "
 from atlassian import Confluence
-confluence = Confluence(url='http://confluence.staytech.xyz', username='admin', password='muntilan')
+confluence = Confluence(url='http://confluence.staytech.xyz', username='admin', password='****')
 pages = confluence.get_all_pages_from_space('MKB')
 print(f'Found {len(pages)} pages')
 "
@@ -555,7 +555,7 @@ LOG_LEVEL=DEBUG python3 test_confluence.py
 # Check Qdrant collections
 python3 -c "
 from qdrant_client import QdrantClient
-client = QdrantClient(url='http://qdrant.staytech.xyz', api_key='testajainimah')
+client = QdrantClient(url='http://qdrant.staytech.xyz', api_key='****')
 collections = client.get_collections()
 for c in collections.collections:
     print(f'{c.name}: {client.get_collection(c.name).points_count} points')
