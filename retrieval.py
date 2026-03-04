@@ -47,7 +47,9 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'text-embedding-3-small')
 LLM_MODEL = os.getenv('LLM_MODEL', 'seed-2-0-mini-free')
 
-QDRANT_URL = os.getenv('QDRANT_URL')
+QDRANT_HOST = os.getenv('QDRANT_HOST', 'qdrant.staytech.xyz')
+QDRANT_PORT = int(os.getenv('QDRANT_PORT', '443'))
+QDRANT_HTTPS = os.getenv('QDRANT_HTTPS', 'true').lower() == 'true'
 QDRANT_API_KEY = os.getenv('QDRANT_API_KEY')
 COLLECTION_NAME = os.getenv('QDRANT_COLLECTION_NAME', 'knowledge_base_ml')
 
@@ -60,7 +62,9 @@ def validate_configuration():
     
     configs = {
         'OPENAI_API_KEY': OPENAI_API_KEY,
-        'QDRANT_URL': QDRANT_URL,
+        'QDRANT_HOST': QDRANT_HOST,
+        'QDRANT_API_KEY': QDRANT_API_KEY,
+        'COLLECTION_NAME': COLLECTION_NAME
     }
     
     for key, value in configs.items():
@@ -85,14 +89,17 @@ def initialize_rag_chain():
         # Initialize embeddings
         embeddings = OpenAIEmbeddings(
             model=EMBEDDING_MODEL,
-            openai_api_key=OPENAI_API_KEY
+            openai_api_key=OPENAI_API_KEY,
+            openai_api_base="https://ai.sumopod.com/v1"
         )
         
         # Initialize vector store
         vector_store = QdrantVectorStore.from_existing_collection(
             embedding=embeddings,
             collection_name=COLLECTION_NAME,
-            url=QDRANT_URL,
+            host=QDRANT_HOST,
+            port=QDRANT_PORT,
+            https=QDRANT_HTTPS,
             api_key=QDRANT_API_KEY,
         )
         
@@ -101,6 +108,7 @@ def initialize_rag_chain():
             model=LLM_MODEL,
             openai_api_key=OPENAI_API_KEY,
             temperature=0.7,
+            openai_api_base="https://ai.sumopod.com/v1"
         )
         
         # Create retriever
@@ -141,8 +149,8 @@ Jawaban:"""
         logger.info(f"  - Embedding model: {EMBEDDING_MODEL}")
         logger.info(f"  - LLM model: {LLM_MODEL}")
         logger.info(f"  - Collection: {COLLECTION_NAME}")
-        logger.info(f"  - Qdrant URL: {QDRANT_URL}")
-        
+        logger.info(f"  - Qdrant Host: {QDRANT_HOST}:{QDRANT_PORT} (HTTPS: {QDRANT_HTTPS})")
+        logger.info(f"  - Qdrant API Key: {QDRANT_API_KEY}")
         return rag_chain, retriever
         
     except Exception as e:
@@ -151,7 +159,7 @@ Jawaban:"""
         logger.error("\nTroubleshooting:")
         logger.error("  - Pastikan data sudah di-embed ke Qdrant (run embed.py terlebih dahulu)")
         logger.error("  - Periksa OPENAI_API_KEY - pastikan valid dan memiliki quota")
-        logger.error("  - Periksa QDRANT_URL dan QDRANT_API_KEY")
+        logger.error("  - Periksa QDRANT_HOST dan QDRANT_API_KEY")
         
         return None, None
 
