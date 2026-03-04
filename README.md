@@ -179,7 +179,7 @@ python3 test_confluence.py
 TEST CONFLUENCE CONNECTION
 ════════════════════════════════════════════════════════════
 📍 Confluence URL: http://confluence.staytech.xyz
-👤 Username: admin
+👤 Username: *****
 📚 Space Key: MKB
 
 ⏳ Menghubungkan ke Confluence API...
@@ -254,7 +254,7 @@ python3 embed.py
 VALIDASI KONFIGURASI
 ════════════════════════════════════════════════════════════
 ✓ CONFLUENCE_URL: http://confluence.staytech.xyz
-✓ CONFLUENCE_USERNAME: admin
+✓ CONFLUENCE_USERNAME: ****
 ✓ CONFLUENCE_CREDENTIAL: ****
 ✓ OPENAI_API_KEY: ****
 ✓ QDRANT_URL: http://qdrant.staytech.xyz
