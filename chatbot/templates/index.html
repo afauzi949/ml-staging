@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML Knowledge Base Chatbot</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-sidebar: #1a1d27;
+      --bg-main: #f4f5f9;
+      --bg-bubble-user: #4f7ef8;
+      --bg-bubble-bot: #ffffff;
+      --text-primary: #1e2130;
+      --text-muted: #8a8fa8;
+      --text-sidebar: #c8cce0;
+      --border: #e2e4ed;
+      --accent: #4f7ef8;
+      --accent-hover: #3a65d6;
+      --error: #e85454;
+      --shadow: 0 2px 12px rgba(0,0,0,.08);
+      --radius: 18px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      height: 100dvh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--bg-sidebar);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      gap: 16px;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      padding: 4px 8px;
+    }
+
+    .sidebar-logo svg {
+      flex-shrink: 0;
+    }
+
+    .sidebar-divider {
+      border: none;
+      border-top: 1px solid #2e3248;
+    }
+
+    .sidebar-info {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 8px 10px;
+      background: #22273a;
+      border-radius: var(--radius-sm);
+    }
+
+    .info-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .info-value {
+      font-size: 13px;
+      color: var(--text-sidebar);
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-top: auto;
+    }
+
+    .status-badge.ready { background: #1e3b2a; color: #4cc97a; }
+    .status-badge.error { background: #3b1e1e; color: #e85454; }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* ── Main area ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 16px 24px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .header-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .clear-btn {
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .clear-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Messages ── */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar { width: 5px; }
+    .messages::-webkit-scrollbar-thumb { background: #d0d3e0; border-radius: 4px; }
+
+    /* ── Welcome ── */
+    .welcome {
+      margin: auto;
+      text-align: center;
+      max-width: 420px;
+      padding: 40px 20px;
+    }
+
+    .welcome-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .welcome h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .welcome p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .suggestion-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .chip {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 7px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #eef2ff;
+    }
+
+    /* ── Message rows ── */
+    .msg-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      animation: fadeIn .2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .avatar.bot {
+      background: linear-gradient(135deg, #4f7ef8 0%, #7c56f8 100%);
+      color: #fff;
+    }
+
+    .avatar.user {
+      background: #e0e6ff;
+      color: var(--accent);
+    }
+
+    .bubble-wrap { max-width: 72%; display: flex; flex-direction: column; gap: 6px; }
+    .msg-row.user .bubble-wrap { align-items: flex-end; }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.65;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .bubble.bot {
+      background: var(--bg-bubble-bot);
+      box-shadow: var(--shadow);
+      border-top-left-radius: 4px;
+      color: var(--text-primary);
+    }
+
+    .bubble.user {
+      background: var(--bg-bubble-user);
+      color: #fff;
+      border-top-right-radius: 4px;
+    }
+
+    .bubble.error {
+      background: #fff5f5;
+      color: var(--error);
+      border: 1px solid #ffd0d0;
+    }
+
+    /* ── Sources ── */
+    .sources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #eef2ff;
+      border: 1px solid #d5deff;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: var(--accent);
+      text-decoration: none;
+      transition: background .15s;
+    }
+
+    .source-tag:hover { background: #dce5ff; }
+
+    .source-tag svg { flex-shrink: 0; }
+
+    /* ── Typing indicator ── */
+    .typing-bubble {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 16px;
+      background: #fff;
+      border-radius: var(--radius);
+      border-top-left-radius: 4px;
+      box-shadow: var(--shadow);
+      width: fit-content;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #bbc0d6;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+
+    .dot:nth-child(2) { animation-delay: .2s; }
+    .dot:nth-child(3) { animation-delay: .4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%            { transform: translateY(-6px); }
+    }
+
+    /* ── Input area ── */
+    .input-area {
+      padding: 16px 24px;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: var(--bg-main);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      transition: border-color .15s;
+    }
+
+    .input-row:focus-within { border-color: var(--accent); }
+
+    #msg-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      resize: none;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      max-height: 140px;
+      min-height: 22px;
+      line-height: 1.5;
+      font-family: inherit;
+    }
+
+    #msg-input::placeholder { color: var(--text-muted); }
+
+    .send-btn {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, transform .1s;
+    }
+
+    .send-btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .send-btn:active:not(:disabled) { transform: scale(.94); }
+    .send-btn:disabled { background: #c5cbe8; cursor: not-allowed; }
+
+    .input-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    /* ── Init error banner ── */
+    .init-error-banner {
+      background: #fff5f5;
+      border: 1px solid #ffd0d0;
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--error);
+      margin: 16px 24px 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .sidebar { display: none; }
+      .bubble-wrap { max-width: 88%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="8" fill="#4f7ef8"/>
+      <path d="M7 14h14M7 10h9M7 18h11" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    ML Knowledge Base
+  </div>
+
+  <hr class="sidebar-divider" />
+
+  <div class="sidebar-info">
+    <div class="info-row">
+      <span class="info-label">Model LLM</span>
+      <span class="info-value" title="{{ llm_model }}">{{ llm_model }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Koleksi Vektor</span>
+      <span class="info-value" title="{{ collection }}">{{ collection }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Retrieval</span>
+      <span class="info-value">Top-4 Dokumen (Cosine)</span>
+    </div>
+  </div>
+
+  {% if ready %}
+  <span class="status-badge ready">
+    <span class="status-dot"></span> Siap
+  </span>
+  {% else %}
+  <span class="status-badge error">
+    <span class="status-dot"></span> Tidak Siap
+  </span>
+  {% endif %}
+</aside>
+
+<!-- ── Main ── -->
+<main class="main">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="header-title">ML Helpbot</div>
+      <div class="header-sub">Tanya apa saja seputar knowledge base ML</div>
+    </div>
+    <button class="clear-btn" onclick="clearChat()">Bersihkan Chat</button>
+  </div>
+
+  {% if init_error %}
+  <div class="init-error-banner">
+    <strong>Gagal menginisialisasi RAG:</strong> {{ init_error }}
+  </div>
+  {% endif %}
+
+  <!-- Messages -->
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">🤖</div>
+      <h2>Halo! Ada yang bisa saya bantu?</h2>
+      <p>Saya dapat menjawab pertanyaan berdasarkan knowledge base ML yang telah diindeks dari Confluence.</p>
+      <div class="suggestion-chips">
+        <button class="chip" onclick="sendSuggestion(this)">Apa itu ML?</button>
+        <button class="chip" onclick="sendSuggestion(this)">Bagaimana cara deploy model?</button>
+        <button class="chip" onclick="sendSuggestion(this)">Cara menggunakan pipeline?</button>
+        <button class="chip" onclick="sendSuggestion(this)">Dokumentasi API ML</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <div class="input-row">
+      <textarea
+        id="msg-input"
+        rows="1"
+        placeholder="Ketik pertanyaan Anda…"
+        oninput="autoResize(this)"
+        onkeydown="handleKeydown(event)"
+      ></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Kirim">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M13.5 2.5L2 7.5l4.5 1.5L8 13.5l5.5-11z" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+    <p class="input-hint">Enter untuk kirim · Shift+Enter untuk baris baru</p>
+  </div>
+</main>
+
+<script>
+  const messagesEl = document.getElementById('messages');
+  const inputEl    = document.getElementById('msg-input');
+  const sendBtn    = document.getElementById('send-btn');
+
+  let isLoading = false;
+
+  // ── Auto-resize textarea ──
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  }
+
+  // ── Enter key handler ──
+  function handleKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  // ── Suggestion chip ──
+  function sendSuggestion(el) {
+    inputEl.value = el.textContent;
+    sendMessage();
+  }
+
+  // ── Hide welcome screen ──
+  function hideWelcome() {
+    const w = document.getElementById('welcome');
+    if (w) w.remove();
+  }
+
+  // ── Scroll to bottom ──
+  function scrollBottom() {
+    messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
+  }
+
+  // ── Append user bubble ──
+  function appendUser(text) {
+    hideWelcome();
+    const row = document.createElement('div');
+    row.className = 'msg-row user';
+    row.innerHTML = `
+      <div class="avatar user">U</div>
+      <div class="bubble-wrap">
+        <div class="bubble user">${escapeHtml(text)}</div>
+      </div>`;
+    messagesEl.appendChild(row);
+    scrollBottom();
+  }
+
+  // ── Append typing indicator ──
+  function appendTyping() {
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.id = 'typing-row';
+    row.innerHTML = `
+      <div class="avatar bot">AI</div>
+      <div class="bubble-wrap">
+        <div class="typing-bubble">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>`;
+    messagesEl.appendChild(row);
+    scrollBottom();
+  }
+
+  // ── Remove typing indicator ──
+  function removeTyping() {
+    const el = document.getElementById('typing-row');
+    if (el) el.remove();
+  }
+
+  // ── Append bot bubble ──
+  function appendBot(text, sources, isError) {
+    removeTyping();
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+
+    let sourcesHtml = '';
+    if (sources && sources.length) {
+      const tags = sources.map(s => {
+        if (s.url) {
+          return `<a class="source-tag" href="${escapeHtml(s.url)}" target="_blank" rel="noopener">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M1 9L9 1M9 1H4M9 1V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            ${escapeHtml(s.title)}
+          </a>`;
+        }
+        return `<span class="source-tag">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <rect x="1" y="1" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M3 4h4M3 6h2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          ${escapeHtml(s.title)}
+        </span>`;
+      }).join('');
+      sourcesHtml = `<div class="sources">${tags}</div>`;
+    }
+
+    row.innerHTML = `
+      <div class="avatar bot">AI</div>
+      <div class="bubble-wrap">
+        <div class="bubble ${isError ? 'error' : 'bot'}">${escapeHtml(text)}</div>
+        ${sourcesHtml}
+      </div>`;
+    messagesEl.appendChild(row);
+    scrollBottom();
+  }
+
+  // ── Escape HTML ──
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Main send function ──
+  async function sendMessage() {
+    if (isLoading) return;
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    isLoading = true;
+    sendBtn.disabled = true;
+
+    appendUser(text);
+    appendTyping();
+
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        appendBot(data.error || 'Terjadi kesalahan. Coba lagi.', null, true);
+      } else {
+        appendBot(data.answer, data.sources, false);
+      }
+    } catch (err) {
+      appendBot('Gagal terhubung ke server. Periksa koneksi Anda.', null, true);
+    } finally {
+      isLoading = false;
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  }
+
+  // ── Clear chat ──
+  function clearChat() {
+    messagesEl.innerHTML = `
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🤖</div>
+        <h2>Halo! Ada yang bisa saya bantu?</h2>
+        <p>Saya dapat menjawab pertanyaan berdasarkan knowledge base ML yang telah diindeks dari Confluence.</p>
+        <div class="suggestion-chips">
+          <button class="chip" onclick="sendSuggestion(this)">Apa itu ML?</button>
+          <button class="chip" onclick="sendSuggestion(this)">Bagaimana cara deploy model?</button>
+          <button class="chip" onclick="sendSuggestion(this)">Cara menggunakan pipeline?</button>
+          <button class="chip" onclick="sendSuggestion(this)">Dokumentasi API ML</button>
+        </div>
+      </div>`;
+  }
+
+  // Focus input on load
+  inputEl.focus();
+</script>
+</body>
+</html>
